@@ -3,21 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Playable_Fixed_Full</title>
+    <title>Playable_Stable_9_16</title>
     <style>
-        body { 
-            margin: 0; padding: 0; background: #000; 
-            display: flex; justify-content: center; align-items: center; 
-            height: 100vh; height: -webkit-fill-available; overflow: hidden; 
-            font-family: sans-serif; 
-        }
-        
-        #gameCanvas {
-            position: relative; width: 100vw; height: 100vh;
-            max-width: 56.25vh; aspect-ratio: 9/16;
-            background: #111; overflow: hidden;
+        /* Обнуляємо все і центруємо контейнер гри */
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
         }
 
+        /* КОНТЕЙНЕР-ФІКСАТОР (9:16) */
+        #gameCanvas {
+            position: relative;
+            /* Розрахунок розміру, щоб вписати 9:16 у будь-який екран */
+            width: 100vw;
+            height: 177.77vw; /* 16/9 = 1.77 */
+            max-height: 100vh;
+            max-width: 56.25vh; /* 9/16 = 0.5625 */
+            background: #111;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        /* Фон завжди заповнює цей контейнер */
         #bg { 
             position: absolute; top: 50%; left: 50%; 
             min-width: 100%; min-height: 100%; 
@@ -30,45 +38,36 @@
             z-index: 15; pointer-events: none; 
         }
         
+        /* Координати персонажів тепер стабільні всередині 9:16 */
         #woman { 
-            position: absolute; bottom: 48%; left: 20%; width: 25%; 
-            transition: bottom 0.5s, transform 0.5s, left 0.5s; z-index: 12; 
+            position: absolute; bottom: 46%; left: 20%; width: 25%; 
+            transition: all 0.5s ease-out; z-index: 12; 
         }
 
         #man { 
-            position: absolute; bottom: 48%; left: 0%; width: 25%; 
+            position: absolute; bottom: 46%; left: 0%; width: 25%; 
             transition: all 0.8s ease-out; z-index: 10; 
         }
 
         .girl-container {
             position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 100%; 
-            z-index: 20; pointer-events: none;
+            transform: translateX(-50%); width: 100%; z-index: 20; 
         }
-        .girl-container img {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: auto;
-        }
+        .girl-container img { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; }
 
-        #girlOutline { 
-            z-index: 21; filter: drop-shadow(0 0 12px #0f0); 
-            transition: opacity 0.3s; 
-        }
+        #girlOutline { z-index: 21; filter: drop-shadow(0 0 12px #0f0); transition: opacity 0.3s; }
 
+        /* UI */
+        #topLabel { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); width: 85%; z-index: 30; }
+        #callToAction { position: absolute; bottom: 55%; left: 50%; transform: translateX(-50%); width: 65%; z-index: 30; }
+        #arrow { position: absolute; bottom: 45%; left: 50%; transform: translateX(-50%); width: 15%; z-index: 31; }
+
+        /* Анімації */
         .pulse { animation: pulseEffect 2s infinite ease-in-out; }
-        @keyframes pulseEffect {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        #topLabel { position: absolute; top: 8%; left: 50%; transform: translateX(-50%); width: 80%; z-index: 30; transition: opacity 0.5s; }
-        #callToAction { position: absolute; bottom: 55%; left: 50%; transform: translateX(-50%); width: 65%; z-index: 30; animation: ctaSync 0.8s infinite alternate ease-in-out; }
-        #arrow { position: absolute; bottom: 45%; left: 50%; transform: translateX(-50%); width: 15%; z-index: 31; animation: arrowSync 0.8s infinite alternate ease-in-out; }
-
-        @keyframes ctaSync { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.1); } }
-        @keyframes arrowSync { from { transform: translateX(-50%) translateY(0); } to { transform: translateX(-50%) translateY(15px); } }
-
+        @keyframes pulseEffect { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        
         .splash-text { position: absolute; z-index: 100; pointer-events: none; }
-        .muteBtn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border: none; background: rgba(0,0,0,0.5); color: #fff; border-radius: 50%; cursor: pointer; z-index: 200; }
+        .muteBtn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border: none; background: rgba(0,0,0,0.5); color: #fff; border-radius: 50%; z-index: 200; }
         .darkOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; opacity: 0; pointer-events: none; z-index: 150; }
         
         #finalBtn { 
@@ -126,32 +125,12 @@
     let stopTimer;
     let isFinished = false;
     let splashSide = 1;
-    bgMusic.volume = 0.15;
-
-    function spawnSplash() {
-        const s = document.createElement('img');
-        s.src = 'assets/splash.webp'; 
-        s.className = 'splash-text';
-        s.style.left = (splashSide > 0 ? 75 : 25) + '%';
-        s.style.top = '70%';
-        s.style.width = '35%'; 
-        const rotation = splashSide > 0 ? 15 : -15;
-        canvas.appendChild(s);
-        s.animate([
-            { transform: `translate(-50%, -50%) scale(0) rotate(${rotation}deg)`, opacity: 0 },
-            { transform: `translate(-50%, -50%) scale(1.1) rotate(${rotation * 1.2}deg)`, opacity: 1, offset: 0.5 },
-            { transform: `translate(-50%, -50%) scale(1.3) rotate(${rotation * 1.5}deg)`, opacity: 0 }
-        ], { duration: 600, easing: 'ease-out' });
-        setTimeout(() => s.remove(), 600);
-        splashSide *= -1;
-    }
 
     function handleStopTapping() {
         if (isFinished) return;
         stopSound.currentTime = 0;
         stopSound.play().catch(() => {});
         girl.classList.add('pulse');
-        outline.classList.add('pulse');
     }   
 
     canvas.addEventListener('pointerdown', (e) => {
@@ -162,99 +141,72 @@
 
         if(taps === 1) {
             bgMusic.play().catch(() => {});
+            bgMusic.volume = 0.2;
             document.getElementById('callToAction').style.display = 'none';
             document.getElementById('arrow').style.display = 'none';
             girl.classList.remove('pulse');
-            outline.classList.remove('pulse');
             woman.src = "assets/woman_reaction.webp";
         }
 
-        // Клонування звуку кроку (тап)
-        const playStepSound = (isRising) => {
-            const soundClone = tapSound.cloneNode();
-            soundClone.volume = isRising ? 0.3 : 0.6;
-            soundClone.playbackRate = 1.5;
-            soundClone.play().catch(() => {});
-            soundClone.onended = () => soundClone.remove();
-        };
+        // Звуки
+        const s1 = tapSound.cloneNode(); s1.volume = 0.6; s1.play();
+        setTimeout(() => { if(!isFinished) { const s2 = tapSound.cloneNode(); s2.volume = 0.3; s2.play(); } }, 200);
 
-        // Подвійний звук для ефекту присідання
-        playStepSound(false);
-        setTimeout(() => { if(!isFinished) playStepSound(true); }, 200);
-
-        // Повертаємо анімацію присідання (стрибка)
+        // Анімація присідання (стрибок)
         girlContainer.animate([
-            { transform: 'translateX(-50%) translateY(0) scale(1)' },
-            { transform: 'translateX(-50%) translateY(80px) scale(1.02)' }, // 80px для візуального ефекту
-            { transform: 'translateX(-50%) translateY(0) scale(1)' }
+            { transform: 'translateX(-50%) translateY(0)' },
+            { transform: 'translateX(-50%) translateY(10%)' },
+            { transform: 'translateX(-50%) translateY(0)' }
         ], { duration: 400, easing: 'ease-out' });
 
-        // Таймер зупинки
         stopTimer = setTimeout(handleStopTapping, 500);
-
         outline.style.opacity = 1 - (taps * 0.2);
-        spawnSplash();
 
-        // Поступове наближення жінки
-        woman.style.bottom = (48 - taps * 0.5) + "%"; 
-        woman.style.transform = `scale(${1 + taps * 0.015})`;
+        // Сплеш текст
+        const s = document.createElement('img');
+        s.src = 'assets/splash.webp'; s.className = 'splash-text';
+        s.style.left = (splashSide > 0 ? 75 : 25) + '%'; s.style.top = '70%'; s.style.width = '35%';
+        canvas.appendChild(s);
+        s.animate([{ opacity: 0, scale: 0 }, { opacity: 1, scale: 1, offset: 0.5 }, { opacity: 0, scale: 1.2 }], { duration: 600 });
+        setTimeout(() => s.remove(), 600);
+        splashSide *= -1;
+
+        // Рух жінки
+        woman.style.bottom = (46 - taps * 0.5) + "%"; 
 
         if(taps === 5) {
             isFinished = true;
-            clearTimeout(stopTimer);
             triggerParticles();
-            
             girl.src = "assets/girl2.webp"; 
             woman.src = "assets/woman2.webp"; 
             man.src = "assets/man2.webp"; 
-
-            // Позиції фіналу
-            man.style.left = "10%";  
-            man.style.bottom = "43.5%";
-            man.style.transform = "scale(1.2)";
-                
-            woman.style.bottom = "40.5%"; 
-            woman.style.left = "35%";
-            woman.style.transform = "scale(1.5)";
+            
+            man.style.left = "10%"; man.style.bottom = "42%";
+            woman.style.left = "35%"; woman.style.bottom = "40%";
+            woman.style.transform = "scale(1.4)";
 
             setTimeout(() => {
                 girl.src = "assets/girl3.webp"; 
                 document.getElementById('topLabel').style.opacity = "0";
-                overlay.style.transition = "opacity 1s";
-                overlay.style.opacity = "0.5"; 
+                overlay.style.transition = "opacity 1s"; overlay.style.opacity = "0.5"; 
                 setTimeout(() => finalBtn.classList.add('show'), 400);
             }, 800);
         }
     });
 
-    // Сердечка
+    // Частки
     const pCanvas = document.getElementById('particles');
     const ctx = pCanvas.getContext('2d');
     let particles = [];
 
-    function drawHeart(ctx, x, y, size) {
-        ctx.beginPath();
-        const r = size / 2;
-        ctx.moveTo(x, y + r);
-        ctx.bezierCurveTo(x - r, y - r, x - size * 1.25, y + r / 2, x, y + size * 1.1);
-        ctx.bezierCurveTo(x + size * 1.25, y + r / 2, x + r, y - r, x, y + r);
-        ctx.fill();
-    }
-
     function triggerParticles() {
-        pCanvas.width = pCanvas.offsetWidth; 
-        pCanvas.height = pCanvas.offsetHeight;
-        for(let i = 0; i < 80; i++) {
+        pCanvas.width = canvas.clientWidth; pCanvas.height = canvas.clientHeight;
+        for(let i = 0; i < 60; i++) {
             particles.push({
-                x: pCanvas.width / 2,
-                y: pCanvas.height / 1.6,
-                vx: (Math.random() - 0.5) * 10,
-                vy: (Math.random() - 0.7) * 14,
-                life: 1.0,
-                size: Math.random() * 15 + 8,
-                color: ['#FFB6C1', '#FF69B4', '#FFFFFF', '#FFE4B5'][Math.floor(Math.random() * 4)],
-                rotation: Math.random() * 6,
-                spin: (Math.random() - 0.5) * 0.1
+                x: pCanvas.width / 2, y: pCanvas.height / 1.7,
+                vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.8) * 12,
+                life: 1.0, size: Math.random() * 12 + 6,
+                color: ['#FFB6C1', '#FF69B4', '#FFFFFF'][Math.floor(Math.random() * 3)]
             });
         }
         renderParticles();
@@ -263,16 +215,9 @@
     function renderParticles() {
         ctx.clearRect(0, 0, pCanvas.width, pCanvas.height);
         particles.forEach((p, i) => {
-            p.vx *= 0.98; p.vy += 0.22;
-            p.x += p.vx; p.y += p.vy;
-            p.life -= 0.012;
-            ctx.save();
-            ctx.globalAlpha = p.life;
-            ctx.fillStyle = p.color;
-            ctx.translate(p.x, p.y);
-            ctx.rotate(p.rotation += p.spin);
-            drawHeart(ctx, 0, 0, p.size);
-            ctx.restore();
+            p.x += p.vx; p.y += p.vy; p.vy += 0.22; p.life -= 0.015;
+            ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI*2); ctx.fill();
             if(p.life <= 0) particles.splice(i, 1);
         });
         if(particles.length > 0) requestAnimationFrame(renderParticles);
