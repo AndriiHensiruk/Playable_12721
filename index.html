@@ -70,7 +70,7 @@
     <img id="finalBtn" src="assets/play_button.webp">
 </div>
 
-<audio id="bgMusic" src="assets/bg.mp3" loop></audio>
+<audio id="bgMusic" src="assets/bg.mp3" loop preload="auto" playsinline></audio>
 <audio id="tapSound" src="assets/tap.mp3"></audio>
 <audio id="stopSound" src="assets/stop.mp3"></audio>
 
@@ -111,7 +111,17 @@
         taps++;
 
         if(taps === 1) {
-            bgMusic.play().catch(() => {});
+            // ФІКС ДЛЯ МУЗИКИ: Примусовий запуск на першому тапі
+            bgMusic.muted = false; // На всякий випадок знімаємо mute
+            bgMusic.currentTime = 0;
+            const playPromise = bgMusic.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Автоплей заблоковано, пробуємо ще раз при наступному тапі");
+                });
+            }
+            
             bgMusic.volume = 0.2;
             document.getElementById('callToAction').style.display = 'none';
             document.getElementById('arrow').style.display = 'none';
@@ -123,18 +133,16 @@
         // Звук тапа (миттєво)
         const s = tapSound.cloneNode();
         s.volume = 0.7;
-        s.play();
+        s.play().catch(() => {});
 
-        // Ефект присідання при тапанні
+        // Анімація присідання основної дівчини
         girlContainer.animate([
             { transform: 'translateX(-50%) translateY(0) scale(1)' },
-            { transform: 'translateX(-50%) translateY(105px) scale(1.02)' },
+            { transform: 'translateX(-50%) translateY(90px) scale(1.02)' },
             { transform: 'translateX(-50%) translateY(0) scale(1)' }
-        ], { 
-            duration: 450, // Швидша анімація
-            easing: 'ease-out' 
-        });
+        ], { duration: 550, easing: 'ease-out' });
 
+        // Жінка підходить (тільки збільшення та рух вниз)
         const currentScale = 1 + (taps * 0.08); 
         const currentBottom = (46 - taps * 1.2) + "%"; 
         
@@ -142,7 +150,7 @@
         woman.style.transform = `scale(${currentScale})`;
         woman.style.bottom = currentBottom;
 
-        stopTimer = setTimeout(handleStopTapping, 1000);
+        stopTimer = setTimeout(handleStopTapping, 1500);
         outline.style.opacity = 1 - (taps * 0.2);
 
         // Splash текст
@@ -154,8 +162,6 @@
         setTimeout(() => splash.remove(), 500);
         splashSide *= -1;
 
-        woman.style.bottom = (46 - taps * 0.5) + "%"; 
-
         if(taps === 5) {
             isFinished = true;
             clearTimeout(stopTimer);
@@ -165,8 +171,8 @@
             man.src = "assets/man2.webp"; 
             
             man.style.left = "10%"; man.style.bottom = "42%";
-            woman.style.left = "35%"; woman.style.bottom = "40%";
-            woman.style.transform = "scale(1.4)";
+            woman.style.left = "35%"; woman.style.bottom = "38%";
+            woman.style.transform = "scale(1.6)";
 
             setTimeout(() => {
                 girl.src = "assets/girl3.webp"; 
