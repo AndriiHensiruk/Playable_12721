@@ -127,15 +127,22 @@
 
         // Ефект присідання при тапанні
         girlContainer.animate([
-            { transform: 'translateX(-50%) translateY(0)' },
-            { transform: 'translateX(-50%) translateY(90px)' }, // Збільшена амплітуда
-            { transform: 'translateX(-50%) translateY(0)' }
+            { transform: 'translateX(-50%) translateY(0) scale(1)' },
+            { transform: 'translateX(-50%) translateY(105px) scale(1.02)' },
+            { transform: 'translateX(-50%) translateY(0) scale(1)' }
         ], { 
-            duration: 250, // Швидша анімація
+            duration: 450, // Швидша анімація
             easing: 'ease-out' 
         });
 
-        stopTimer = setTimeout(handleStopTapping, 500);
+        const currentScale = 1 + (taps * 0.08); 
+        const currentBottom = (46 - taps * 1.2) + "%"; 
+        
+        woman.style.transition = "transform 0.4s ease-out, bottom 0.4s ease-out";
+        woman.style.transform = `scale(${currentScale})`;
+        woman.style.bottom = currentBottom;
+
+        stopTimer = setTimeout(handleStopTapping, 1000);
         outline.style.opacity = 1 - (taps * 0.2);
 
         // Splash текст
