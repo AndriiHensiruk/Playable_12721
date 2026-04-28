@@ -18,16 +18,55 @@
             background: #111; overflow: hidden;
         }
 
-        #bg { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; transform: translate(-50%, -50%); object-fit: cover; }
-        #car { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; z-index: 15; pointer-events: none; }
-        #woman { position: absolute; bottom: 46%; left: 20%; width: 25%; transition: all 0.5s ease-out; z-index: 12; }
-        #man { position: absolute; bottom: 46%; left: 0%; width: 25%; transition: all 0.8s ease-out; z-index: 10; }
+        #bg { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            min-width: 100%;
+            min-height: 100%; 
+            transform: translate(-50%, -50%); 
+            object-fit: cover; 
+            pointer-events: none;
+            user-select: none;
+            }
+        #car { 
+            position: absolute; 
+            bottom: 0; left: 50%; 
+            transform: translateX(-50%); 
+            width: 100%; z-index: 15; 
+            pointer-events: none;
+            user-select: none;
+        }
+        #woman { 
+            position: absolute; 
+            bottom: 46%; left: 20%; 
+            width: 25%; 
+            transition: all 0.5s ease-out; 
+            z-index: 12; 
+            pointer-events: none;
+            user-select: none;
+        }
+        #man { 
+            position: absolute; 
+            bottom: 46%; 
+            left: 0%; 
+            width: 25%; 
+            transition: all 0.8s ease-out; 
+            z-index: 10; 
+        }
 
+        /* Знайдіть цей блок у вашому <style> і замініть його */
         .girl-container {
-            position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 100%; 
-            z-index: 20; pointer-events: none;
+            position: absolute; 
+            bottom: 0; 
+            left: 50%;
+            transform: translateX(-50%); 
+            width: 100%; /* Обмежуємо ширину, щоб не тапалось по боках */
+            height: 55%; /* Додаємо висоту, щоб зона кліку була лише знизу */
+            z-index: 20;
+            pointer-events: auto;
             will-change: transform;
+            cursor: pointer;
         }
         .girl-container img { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; }
         #girlOutline { z-index: 21; filter: drop-shadow(0 0 12px #0f0); transition: opacity 0.3s; }
@@ -64,7 +103,7 @@
     <img id="callToAction" src="assets/cta.webp">
     <img id="arrow" src="assets/arrow.webp">
     
-    <button class="muteBtn" id="muteBtn">🔊</button>
+    <button class="muteBtn" id="muteBtn">🔇</button>
     <div class="darkOverlay" id="overlay"></div>
     <canvas class="particles" id="particles"></canvas>
     <img id="finalBtn" src="assets/play_button.webp">
@@ -141,9 +180,12 @@
         outline.classList.add('pulse');
     }   
 
-    canvas.addEventListener('pointerdown', (e) => {
-        if(isFinished || e.target.id === 'muteBtn' || e.target.id === 'finalBtn') return;
-        
+    girlContainer.addEventListener('pointerdown', (e) => {
+    // Зупиняємо розповсюдження події, щоб вона не йшла далі
+        e.stopPropagation();
+
+        if(isFinished) return;
+    
         clearTimeout(stopTimer);
         taps++;
 
@@ -253,6 +295,7 @@
     const pCanvas = document.getElementById('particles');
     const ctx = pCanvas.getContext('2d');
     let particles = [];
+
 
     function triggerParticles() {
         pCanvas.width = canvas.clientWidth; pCanvas.height = canvas.clientHeight;
