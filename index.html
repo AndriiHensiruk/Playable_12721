@@ -3,81 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Playable_Stable_9_16</title>
+    <title>Playable_Tap_Fixed</title>
     <style>
-        /* Обнуляємо все і центруємо контейнер гри */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background: #000; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* КОНТЕЙНЕР-ФІКСАТОР (9:16) */
         #gameCanvas {
             position: relative;
-            /* Розрахунок розміру, щоб вписати 9:16 у будь-який екран */
-            width: 100vw;
-            height: 177.77vw; /* 16/9 = 1.77 */
-            max-height: 100vh;
-            max-width: 56.25vh; /* 9/16 = 0.5625 */
-            background: #111;
-            overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            width: 100vw; height: 177.77vw;
+            max-height: 100vh; max-width: 56.25vh;
+            background: #111; overflow: hidden;
         }
 
-        /* Фон завжди заповнює цей контейнер */
-        #bg { 
-            position: absolute; top: 50%; left: 50%; 
-            min-width: 100%; min-height: 100%; 
-            transform: translate(-50%, -50%); object-fit: cover; 
-        }
-
-        #car { 
-            position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 100%; 
-            z-index: 15; pointer-events: none; 
-        }
-        
-        /* Координати персонажів тепер стабільні всередині 9:16 */
-        #woman { 
-            position: absolute; bottom: 46%; left: 20%; width: 25%; 
-            transition: all 0.5s ease-out; z-index: 12; 
-        }
-
-        #man { 
-            position: absolute; bottom: 46%; left: 0%; width: 25%; 
-            transition: all 0.8s ease-out; z-index: 10; 
-        }
+        #bg { position: absolute; top: 50%; left: 50%; min-width: 100%; min-height: 100%; transform: translate(-50%, -50%); object-fit: cover; }
+        #car { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; z-index: 15; pointer-events: none; }
+        #woman { position: absolute; bottom: 46%; left: 20%; width: 25%; transition: all 0.5s ease-out; z-index: 12; }
+        #man { position: absolute; bottom: 46%; left: 0%; width: 25%; transition: all 0.8s ease-out; z-index: 10; }
 
         .girl-container {
             position: absolute; bottom: 0; left: 50%;
-            transform: translateX(-50%); width: 100%; z-index: 20; 
+            transform: translateX(-50%); width: 100%; 
+            z-index: 20; pointer-events: none;
+            will-change: transform;
         }
         .girl-container img { position: absolute; bottom: 0; left: 0; width: 100%; height: auto; }
-
         #girlOutline { z-index: 21; filter: drop-shadow(0 0 12px #0f0); transition: opacity 0.3s; }
 
-        /* UI */
+        .pulse { animation: pulseEffect 2s infinite ease-in-out; }
+        @keyframes pulseEffect { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
         #topLabel { position: absolute; top: 5%; left: 50%; transform: translateX(-50%); width: 85%; z-index: 30; }
         #callToAction { position: absolute; bottom: 55%; left: 50%; transform: translateX(-50%); width: 65%; z-index: 30; }
         #arrow { position: absolute; bottom: 45%; left: 50%; transform: translateX(-50%); width: 15%; z-index: 31; }
 
-        /* Анімації */
-        .pulse { animation: pulseEffect 2s infinite ease-in-out; }
-        @keyframes pulseEffect { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        
         .splash-text { position: absolute; z-index: 100; pointer-events: none; }
-        .muteBtn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border: none; background: rgba(0,0,0,0.5); color: #fff; border-radius: 50%; z-index: 200; }
+        .muteBtn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border: none; background: rgba(0,0,0,0.5); color: #fff; border-radius: 50%; z-index: 200; cursor: pointer; }
         .darkOverlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; opacity: 0; pointer-events: none; z-index: 150; }
-        
-        #finalBtn { 
-            position: absolute; bottom: 45%; left: 50%; 
-            transform: translateX(-50%) scale(0); width: 75%; 
-            cursor: pointer; z-index: 201; 
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
+        #finalBtn { position: absolute; bottom: 45%; left: 50%; transform: translateX(-50%) scale(0); width: 75%; cursor: pointer; z-index: 201; transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #finalBtn.show { transform: translateX(-50%) scale(1); }
-        
         canvas.particles { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 160; }
     </style>
 </head>
@@ -126,11 +92,16 @@
     let isFinished = false;
     let splashSide = 1;
 
+    // Анімації UI
+    document.getElementById('callToAction').animate([{ transform: 'translateX(-50%) scale(1)' }, { transform: 'translateX(-50%) scale(1.1)' }], { duration: 800, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+    document.getElementById('arrow').animate([{ transform: 'translateX(-50%) translateY(0)' }, { transform: 'translateX(-50%) translateY(15px)' }], { duration: 800, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+
     function handleStopTapping() {
         if (isFinished) return;
         stopSound.currentTime = 0;
         stopSound.play().catch(() => {});
         girl.classList.add('pulse');
+        outline.classList.add('pulse');
     }   
 
     canvas.addEventListener('pointerdown', (e) => {
@@ -145,37 +116,42 @@
             document.getElementById('callToAction').style.display = 'none';
             document.getElementById('arrow').style.display = 'none';
             girl.classList.remove('pulse');
+            outline.classList.remove('pulse');
             woman.src = "assets/woman_reaction.webp";
         }
 
-        // Звуки
-        const s1 = tapSound.cloneNode(); s1.volume = 0.6; s1.play();
-        setTimeout(() => { if(!isFinished) { const s2 = tapSound.cloneNode(); s2.volume = 0.3; s2.play(); } }, 200);
+        // Звук тапа (миттєво)
+        const s = tapSound.cloneNode();
+        s.volume = 0.7;
+        s.play();
 
-        // Анімація присідання (стрибок)
+        // Ефект присідання при тапанні
         girlContainer.animate([
             { transform: 'translateX(-50%) translateY(0)' },
-            { transform: 'translateX(-50%) translateY(10%)' },
+            { transform: 'translateX(-50%) translateY(90px)' }, // Збільшена амплітуда
             { transform: 'translateX(-50%) translateY(0)' }
-        ], { duration: 400, easing: 'ease-out' });
+        ], { 
+            duration: 250, // Швидша анімація
+            easing: 'ease-out' 
+        });
 
         stopTimer = setTimeout(handleStopTapping, 500);
         outline.style.opacity = 1 - (taps * 0.2);
 
-        // Сплеш текст
-        const s = document.createElement('img');
-        s.src = 'assets/splash.webp'; s.className = 'splash-text';
-        s.style.left = (splashSide > 0 ? 75 : 25) + '%'; s.style.top = '70%'; s.style.width = '35%';
-        canvas.appendChild(s);
-        s.animate([{ opacity: 0, scale: 0 }, { opacity: 1, scale: 1, offset: 0.5 }, { opacity: 0, scale: 1.2 }], { duration: 600 });
-        setTimeout(() => s.remove(), 600);
+        // Splash текст
+        const splash = document.createElement('img');
+        splash.src = 'assets/splash.webp'; splash.className = 'splash-text';
+        splash.style.left = (splashSide > 0 ? 75 : 25) + '%'; splash.style.top = '70%'; splash.style.width = '35%';
+        canvas.appendChild(splash);
+        splash.animate([{ opacity: 0, scale: 0 }, { opacity: 1, scale: 1.1, offset: 0.5 }, { opacity: 0, scale: 1.3 }], { duration: 500 });
+        setTimeout(() => splash.remove(), 500);
         splashSide *= -1;
 
-        // Рух жінки
         woman.style.bottom = (46 - taps * 0.5) + "%"; 
 
         if(taps === 5) {
             isFinished = true;
+            clearTimeout(stopTimer);
             triggerParticles();
             girl.src = "assets/girl2.webp"; 
             woman.src = "assets/woman2.webp"; 
@@ -194,18 +170,17 @@
         }
     });
 
-    // Частки
     const pCanvas = document.getElementById('particles');
     const ctx = pCanvas.getContext('2d');
     let particles = [];
 
     function triggerParticles() {
         pCanvas.width = canvas.clientWidth; pCanvas.height = canvas.clientHeight;
-        for(let i = 0; i < 60; i++) {
+        for(let i = 0; i < 70; i++) {
             particles.push({
                 x: pCanvas.width / 2, y: pCanvas.height / 1.7,
-                vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.8) * 12,
-                life: 1.0, size: Math.random() * 12 + 6,
+                vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.8) * 15,
+                life: 1.0, size: Math.random() * 15 + 5,
                 color: ['#FFB6C1', '#FF69B4', '#FFFFFF'][Math.floor(Math.random() * 3)]
             });
         }
@@ -215,7 +190,7 @@
     function renderParticles() {
         ctx.clearRect(0, 0, pCanvas.width, pCanvas.height);
         particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy; p.vy += 0.22; p.life -= 0.015;
+            p.x += p.vx; p.y += p.vy; p.vy += 0.3; p.life -= 0.015;
             ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
             ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI*2); ctx.fill();
             if(p.life <= 0) particles.splice(i, 1);
