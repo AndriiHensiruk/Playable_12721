@@ -70,7 +70,7 @@
     <img id="finalBtn" src="assets/play_button.webp">
 </div>
 
-<audio id="bgMusic" src="assets/bg.mp3" loop preload="auto" playsinline></audio>
+<audio id="bgMusic" src="assets/bg.mp3" loop muted playsinline webkit-playsinline></audio>
 <audio id="tapSound" src="assets/tap.mp3"></audio>
 <audio id="stopSound" src="assets/stop.mp3"></audio>
 
@@ -82,6 +82,7 @@
     const overlay = document.getElementById('overlay');
     const finalBtn = document.getElementById('finalBtn');
     const bgMusic = document.getElementById('bgMusic');
+    const muteBtn = document.getElementById('muteBtn');
     const tapSound = document.getElementById('tapSound');
     const stopSound = document.getElementById('stopSound');
     const girlContainer = document.querySelector('.girl-container');
@@ -91,10 +92,46 @@
     let stopTimer;
     let isFinished = false;
     let splashSide = 1;
+    let audioUnlocked = false;
+
 
     // Анімації UI
     document.getElementById('callToAction').animate([{ transform: 'translateX(-50%) scale(1)' }, { transform: 'translateX(-50%) scale(1.1)' }], { duration: 800, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
     document.getElementById('arrow').animate([{ transform: 'translateX(-50%) translateY(0)' }, { transform: 'translateX(-50%) translateY(15px)' }], { duration: 800, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' });
+
+    function unlockAudio() {
+        if (audioUnlocked) return;
+
+        bgMusic.muted = false;
+        bgMusic.volume = 0.051;
+
+        const playAttempt = () => {
+            bgMusic.play()
+                .then(() => {
+                    audioUnlocked = true;
+                    muteBtn.innerText = '🔊';
+                })
+                .catch(() => {
+                    // fallback для iOS / WebView
+                    setTimeout(playAttempt, 150);
+                });
+        };
+
+        playAttempt();
+    }
+
+    // 🔇 КНОПКА (єдиний дозволений entry point)
+    muteBtn.onclick = (e) => {
+        e.stopPropagation();
+
+        if (!audioUnlocked) {
+            unlockAudio();
+            return;
+    }
+
+    bgMusic.muted = !bgMusic.muted;
+    muteBtn.innerText = bgMusic.muted ? '🔊' : '🔇';
+};
 
     function handleStopTapping() {
         if (isFinished) return;
@@ -111,9 +148,7 @@
         taps++;
 
         if(taps === 1) {
-            // ФІКС ДЛЯ МУЗИКИ: Примусовий запуск на першому тапі
-            bgMusic.muted = false; // На всякий випадок знімаємо mute
-            bgMusic.currentTime = 0;
+        
             const playPromise = bgMusic.play();
             
             if (playPromise !== undefined) {
@@ -122,7 +157,7 @@
                 });
             }
             
-            bgMusic.volume = 0.2;
+            bgMusic.volume = 0.05;
             document.getElementById('callToAction').style.display = 'none';
             document.getElementById('arrow').style.display = 'none';
             girl.classList.remove('pulse');
@@ -150,16 +185,48 @@
         woman.style.transform = `scale(${currentScale})`;
         woman.style.bottom = currentBottom;
 
-        stopTimer = setTimeout(handleStopTapping, 1500);
+        stopTimer = setTimeout(handleStopTapping, 2500);
         outline.style.opacity = 1 - (taps * 0.2);
 
         // Splash текст
+        // --- ОНОВЛЕНИЙ СПЛЕШ-ТЕКСТ ---
         const splash = document.createElement('img');
-        splash.src = 'assets/splash.webp'; splash.className = 'splash-text';
-        splash.style.left = (splashSide > 0 ? 75 : 25) + '%'; splash.style.top = '70%'; splash.style.width = '35%';
+        splash.src = 'assets/splash.webp'; 
+        splash.className = 'splash-text';
+        
+        // Випадковий невеликий поворот для живості
+        const randomRotation = (Math.random() - 0.5) * 20; 
+        
+        splash.style.left = (splashSide > 0 ? 70 : 15) + '%'; 
+        splash.style.top = '65%'; 
+        splash.style.width = '35%';
         canvas.appendChild(splash);
-        splash.animate([{ opacity: 0, scale: 0 }, { opacity: 1, scale: 1.1, offset: 0.5 }, { opacity: 0, scale: 1.3 }], { duration: 500 });
-        setTimeout(() => splash.remove(), 500);
+
+        splash.animate([
+            { 
+                opacity: 0, 
+                transform: `translateY(0) scale(0.5) rotate(${randomRotation}deg)` 
+            },
+            { 
+                opacity: 1, 
+                transform: `translateY(-40px) scale(1.1) rotate(${randomRotation}deg)`, 
+                offset: 0.2 
+            },
+            { 
+                opacity: 1, 
+                transform: `translateY(-80px) scale(1.2) rotate(${randomRotation}deg)`, 
+                offset: 0.8 
+            },
+            { 
+                opacity: 0, 
+                transform: `translateY(-120px) scale(1.3) rotate(${randomRotation}deg)` 
+            }
+        ], { 
+            duration: 1500, // Довше на екрані (1.5 сек)
+            easing: 'ease-out' 
+        });
+
+        setTimeout(() => splash.remove(), 1500);
         splashSide *= -1;
 
         if(taps === 5) {
@@ -211,11 +278,7 @@
         if(particles.length > 0) requestAnimationFrame(renderParticles);
     }
 
-    document.getElementById('muteBtn').onclick = (e) => {
-        e.stopPropagation();
-        bgMusic.muted = !bgMusic.muted;
-        e.target.innerText = bgMusic.muted ? '🔇' : '🔊';
-    };
+
 </script>
 </body>
 </html>
