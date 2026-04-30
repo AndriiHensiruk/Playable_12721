@@ -186,7 +186,11 @@
     girlContainer.addEventListener('pointerdown', (e) => {
         e.stopPropagation();
         if(isFinished) return;
-    
+        
+        if (bgMusic.paused) {
+            bgMusic.play().catch(err => console.log("Audio block:", err));
+        }
+        
         //stopSoundPlayed = false;
         clearTimeout(stopTimer);
         
