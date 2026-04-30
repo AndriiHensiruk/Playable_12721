@@ -40,6 +40,7 @@
             z-index: 20;
             pointer-events: auto;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
             /* background: rgba(0, 255, 0, 0.2); */ /* Розкоментуйте для тесту зони */
         }
         
@@ -186,7 +187,7 @@
         e.stopPropagation();
         if(isFinished) return;
     
-        stopSoundPlayed = false;
+        //stopSoundPlayed = false;
         clearTimeout(stopTimer);
         
         taps++;
